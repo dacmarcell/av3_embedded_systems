@@ -17,25 +17,42 @@ type Message = {
 
 io.on("connection", (socket) => {
   console.log(`connected: ${socket.id}`);
-  socket.on("message", (socket) => {
+  socket.on("message", async (socket) => {
     const { type, value }: Message = JSON.parse(socket);
 
-    switch (type) {
-      case "temperature":
-        const temperatureAnalyzer = new TemperatureAnalyzer();
-        temperatureAnalyzer.execute();
+    if (type === "temperature") {
+      const temperatureAnalyzer = new TemperatureAnalyzer();
 
-        io.emit(type, "vibrou temp" + value);
-        break;
-      case "vibration":
-        const vibrationAnalyzer = new VibrationAnalyzer();
-        vibrationAnalyzer.execute();
+      const valueToFloat = parseFloat(value);
+      if (isNaN(valueToFloat)) {
+        io.emit("errors", "Valor inválido. O valor deve ser um número");
+        return;
+      }
 
-        io.emit(type, "vibrou vib" + value);
-        break;
-      default:
-        io.emit("errors", "Tipo de mensagem inválido");
+      await temperatureAnalyzer.addValue(valueToFloat);
+      const { state } = await temperatureAnalyzer.execute();
+
+      io.emit(type, state);
+      return;
     }
+
+    if (type === "vibration") {
+      const vibrationAnalyzer = new VibrationAnalyzer();
+
+      const valueToFloat = parseFloat(value);
+      if (isNaN(valueToFloat)) {
+        io.emit("errors", "Valor inválido. O valor deve ser um número");
+        return;
+      }
+
+      await vibrationAnalyzer.addValue(valueToFloat);
+      const { state } = await vibrationAnalyzer.execute();
+
+      io.emit(type, state);
+      return;
+    }
+
+    io.emit("errors", "Tipo de mensagem inválido");
   });
 });
 
