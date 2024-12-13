@@ -1,17 +1,20 @@
+import prisma from "../prisma/singleton";
 import { CONSOLE_COLORS, WARNINGS } from "../utils/constants";
 import { BaseAnalyzer } from "./BaseAnalyzer";
 
 export class VibrationAnalyzer extends BaseAnalyzer {
   execute() {
     console.log("VibrationAnalyzer execute");
-    this.analyze();
+    return this.analyze();
   }
-  analyze() {
-    const baseAverage = this.getBaseAverage();
-    const currentAverage = this.getCurrentAverage();
+
+  async analyze() {
+    const baseAverage = await this.getBaseAverage();
+    const currentAverage = await this.getCurrentAverage();
 
     if (currentAverage === baseAverage) {
       console.log(CONSOLE_COLORS.GREEN, `[VibrationAnalyzer] ${WARNINGS.OK}`);
+      return { state: WARNINGS.OK };
     }
 
     if (currentAverage > baseAverage) {
@@ -19,6 +22,7 @@ export class VibrationAnalyzer extends BaseAnalyzer {
         CONSOLE_COLORS.YELLOW,
         `[VibrationAnalyzer] ${WARNINGS.PAY_ATTENTION}`
       );
+      return { state: WARNINGS.PAY_ATTENTION };
     }
 
     if (currentAverage < baseAverage) {
@@ -26,33 +30,47 @@ export class VibrationAnalyzer extends BaseAnalyzer {
         CONSOLE_COLORS.RED,
         `[VibrationAnalyzer] ${WARNINGS.CRITICAL}`
       );
+      return { state: WARNINGS.CRITICAL };
     }
+
+    return { state: null };
   }
 
-  addValue(value: string) {}
+  async addValue(value: number) {
+    await prisma.vibration.create({ data: { value } });
+  }
 
-  getBaseAverage() {
-    const randomValues: number[] = this.getFiveRandomValues();
+  async getBaseAverage() {
+    const randomValues = await this.getFiveRandomValues();
     return this.average(randomValues);
   }
 
-  getCurrentAverage() {
-    const values: number[] = this.getFiveLastValues();
+  async getCurrentAverage() {
+    const values = await this.getFiveLatestValues();
     return this.average(values);
   }
 
-  private getFiveRandomValues() {
-    const randomList = [];
+  private async getFiveRandomValues() {
+    const totalRecords = await prisma.vibration.count();
+    const skip = Math.floor(Math.random() * totalRecords);
 
-    for (let i = 0; i < 5; i++) {
-      randomList.push(Math.random() * 10);
-    }
+    const vibrationRandomValues = await prisma.vibration.findMany({
+      take: 5,
+      skip,
+      select: { value: true },
+    });
 
-    return randomList;
+    return vibrationRandomValues.map((vib) => vib.value);
   }
 
-  private getFiveLastValues() {
-    return [1, 2, 3, 4, 5];
+  private async getFiveLatestValues() {
+    const fiveLatestVibrations = await prisma.vibration.findMany({
+      take: 5,
+      select: { value: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return fiveLatestVibrations.map((vib) => vib.value);
   }
 
   private average(list: number[]) {
