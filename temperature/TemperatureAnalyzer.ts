@@ -42,12 +42,12 @@ export class TemperatureAnalyzer extends BaseAnalyzer {
     await prisma.temperature.create({ data: { value } });
   }
 
-  async getBaseAverage() {
+  private async getBaseAverage() {
     const randomValues = await this.getFiveRandomValues();
     return this.average(randomValues);
   }
 
-  async getCurrentAverage() {
+  private async getCurrentAverage() {
     const values = await this.getFiveLatestValues();
     return this.average(values);
   }
