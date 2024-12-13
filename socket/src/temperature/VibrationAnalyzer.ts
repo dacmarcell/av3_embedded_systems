@@ -1,4 +1,4 @@
-import prisma from "../prisma/singleton";
+import prisma from "../../prisma/singleton";
 import { CONSOLE_COLORS, WARNINGS } from "../utils/constants";
 import { BaseAnalyzer } from "./BaseAnalyzer";
 
