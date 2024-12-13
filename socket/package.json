@@ -1,9 +1,10 @@
 {
-  "name": "nova-pasta",
-  "version": "1.0.0",
+  "name": "socket-module",
+  "version": "0.0.1",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch app.ts"
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc src/app.ts"
   },
   "keywords": [],
   "author": "",
