@@ -17,6 +17,7 @@ type Message = {
 
 io.on("connection", (socket) => {
   console.log(`connected: ${socket.id}`);
+
   socket.on("message", async (socket) => {
     const { type, value }: Message = JSON.parse(socket);
 
